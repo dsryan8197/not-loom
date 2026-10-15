@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>not-loom</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <h1><span class="logo-dot"></span>not-loom</h1>
+      <span class="tagline">Local screen + camera recorder. Nothing leaves your machine.</span>
+    </header>
+
+    <p id="error" class="error" hidden></p>
+
+    <!-- 1. Setup -->
+    <section id="setup" class="panel setup">
+      <div class="stage" id="stage">
+        <div class="mock-window"><span></span><span></span><span></span></div>
+        <div class="bubble" id="bubble">
+          <video id="camPreview" autoplay muted playsinline></video>
+        </div>
+        <div class="stage-label">Your screen</div>
+      </div>
+
+      <div class="controls">
+        <label class="field">
+          <span>Camera</span>
+          <select id="camSelect"><option>Loading…</option></select>
+        </label>
+
+        <label class="field">
+          <span>Microphone</span>
+          <select id="micSelect"><option>Loading…</option></select>
+        </label>
+
+        <div class="meter-block" data-meter>
+          <div class="meter"><div class="meter-mask" data-meter-mask></div></div>
+          <div class="meter-status" data-meter-status>…</div>
+        </div>
+
+        <div class="field">
+          <span>Camera bubble</span>
+          <div class="seg" id="posSeg" role="radiogroup" aria-label="Bubble position">
+            <button type="button" data-pos="tl" aria-label="Top left">↖</button>
+            <button type="button" data-pos="tr" aria-label="Top right">↗</button>
+            <button type="button" data-pos="bl" aria-label="Bottom left">↙</button>
+            <button type="button" data-pos="br" aria-label="Bottom right">↘</button>
+          </div>
+          <div class="seg" id="sizeSeg" role="radiogroup" aria-label="Bubble size">
+            <button type="button" data-size="s">S</button>
+            <button type="button" data-size="m">M</button>
+            <button type="button" data-size="l">L</button>
+          </div>
+        </div>
+
+        <label class="check"><input type="checkbox" id="sysAudio"> Also record computer / tab audio</label>
+        <label class="check"><input type="checkbox" id="countdown"> 3‑second countdown</label>
+        <label class="check"><input type="checkbox" id="autoDownload"> Save to Downloads automatically when I stop</label>
+
+        <button id="startBtn" class="btn btn-record">
+          <span class="rec-dot"></span> Start recording
+        </button>
+        <p class="hint" id="stopHint"></p>
+      </div>
+    </section>
+
+    <!-- 2. Recording -->
+    <section id="recording" class="panel recording" hidden>
+      <div class="rec-head">
+        <span class="rec-dot live" id="recDot"></span>
+        <span class="timer" id="timer">00:00</span>
+        <span class="rec-state" id="recState">Recording</span>
+      </div>
+      <div class="meter-block wide" data-meter>
+        <div class="meter"><div class="meter-mask" data-meter-mask></div></div>
+        <div class="meter-status" data-meter-status>…</div>
+      </div>
+      <div class="rec-buttons">
+        <button class="btn" id="pauseBtn">Pause</button>
+        <button class="btn" id="muteBtn">Mute mic</button>
+        <button class="btn btn-stop" id="stopBtn"><span class="stop-square"></span> Stop &amp; save</button>
+      </div>
+      <p class="hint"><kbd>Esc</kbd> stop · <kbd>P</kbd> pause · <kbd>M</kbd> mute (when this window or the floating controls are focused)</p>
+    </section>
+
+    <!-- 3. Done -->
+    <section id="done" class="panel done" hidden>
+      <video id="result" controls playsinline></video>
+      <p class="saved" id="savedNote"></p>
+      <div class="rec-buttons">
+        <a class="btn" id="downloadLink">Download again</a>
+        <button class="btn btn-record" id="againBtn"><span class="rec-dot"></span> Record another</button>
+      </div>
+    </section>
+
+    <div class="countdown" id="countdown" hidden></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
