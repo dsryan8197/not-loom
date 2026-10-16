@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let levelView = LevelMenuView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
     private var tickTimer: Timer?
     private var micDevice: AVCaptureDevice?
+    /// Window recordings: the window and the part of the screen being captured
+    /// (global coordinates, origin top left).
+    private var trackedWindow: (id: CGWindowID, crop: CGRect)?
     private var trimWindows: [TrimWindowController] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -127,7 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let bubbleMenu = NSMenu()
         for corner in BubbleCorner.allCases {
-            let entry = item(corner.title, #selector(pickCorner(_:)), on: corner == settings.corner)
+            let entry = item(corner.title, #selector(pickCorner(_:)), on: settings.bubbleCenter == nil && corner == settings.corner)
             entry.representedObject = corner.rawValue
             bubbleMenu.addItem(entry)
         }
@@ -221,7 +224,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         NSRunningApplication(processIdentifier: window.pid)?.activate()
-        startRecording(.window(id), recordArea: window.appKitFrame, bubbleArea: window.appKitFrame)
+
+        // Keep the bubble on the visible part of the window, clear of the Dock.
+        let frame = window.appKitFrame
+        let screen = NSScreen.screens.first { NSPointInRect(NSPoint(x: frame.midX, y: frame.midY), $0.frame) }
+        let visible = frame.intersection(screen?.visibleFrame ?? frame)
+        trackedWindow = (id, window.frame)
+        startRecording(.window(id), recordArea: frame, bubbleArea: visible.isEmpty ? frame : visible)
     }
 
     @objc private func pickCamera(_ sender: NSMenuItem) {
@@ -235,6 +244,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func pickCorner(_ sender: NSMenuItem) {
         if let raw = sender.representedObject as? String, let corner = BubbleCorner(rawValue: raw) {
             settings.corner = corner
+            settings.bubbleCenter = nil // forget where it was dragged
         }
     }
 
@@ -351,6 +361,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func resetToIdle() {
         phase = .idle
+        trackedWindow = nil
         bubble.hide()
         recordingFrame.hide()
         meter.stop()
@@ -391,6 +402,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             levelView.tone = .warn
         }
         if phase == .recording { updateStatusItem() }
+        if phase == .countdown || phase == .recording { followRecordedWindow() }
+    }
+
+    /// If the recorded window moves, move the capture, the red outline and the bubble with it.
+    private func followRecordedWindow() {
+        guard let tracked = trackedWindow,
+              let frame = WindowInfo.currentFrame(of: tracked.id),
+              frame.origin != tracked.crop.origin
+        else { return }
+        let crop = CGRect(origin: frame.origin, size: tracked.crop.size)
+        trackedWindow = (tracked.id, crop)
+        let area = WindowInfo.appKitRect(crop)
+        recordingFrame.show(around: area, isWindow: true)
+        bubble.follow(area)
+        recorder.moveCrop(to: crop)
     }
 
     // MARK: Helpers

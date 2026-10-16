@@ -56,8 +56,20 @@ struct WindowInfo {
     }
 
     /// The window's frame in AppKit coordinates (origin at the bottom left).
-    var appKitFrame: NSRect {
+    var appKitFrame: NSRect { Self.appKitRect(frame) }
+
+    /// Converts a global screen rect (origin top left of the main display) to AppKit's
+    /// coordinates (origin bottom left).
+    static func appKitRect(_ rect: CGRect) -> NSRect {
         let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
-        return NSRect(x: frame.minX, y: primaryHeight - frame.maxY, width: frame.width, height: frame.height)
+        return NSRect(x: rect.minX, y: primaryHeight - rect.maxY, width: rect.width, height: rect.height)
+    }
+
+    /// The window's current frame, or nil if it's gone.
+    static func currentFrame(of id: CGWindowID) -> CGRect? {
+        guard let list = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]],
+              let bounds = list.first?[kCGWindowBounds as String] as? NSDictionary
+        else { return nil }
+        return CGRect(dictionaryRepresentation: bounds as CFDictionary)
     }
 }

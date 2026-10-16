@@ -67,6 +67,22 @@ final class Settings {
         set { defaults.set(newValue.rawValue, forKey: "size") }
     }
 
+    /// Where you last dragged the bubble, as a fraction of the recorded area
+    /// (0,0 = bottom left). nil = use `corner`.
+    var bubbleCenter: CGPoint? {
+        get {
+            guard let xy = defaults.array(forKey: "bubbleCenter") as? [Double], xy.count == 2 else { return nil }
+            return CGPoint(x: xy[0], y: xy[1])
+        }
+        set {
+            if let point = newValue {
+                defaults.set([Double(point.x), Double(point.y)], forKey: "bubbleCenter")
+            } else {
+                defaults.removeObject(forKey: "bubbleCenter")
+            }
+        }
+    }
+
     var countdown: Bool {
         get { defaults.object(forKey: "countdown") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "countdown") }

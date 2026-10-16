@@ -27,6 +27,8 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
     private(set) var startedAt: Date?
 
     private var stream: SCStream?
+    private var config: SCStreamConfiguration?
+    private var displayFrame = CGRect.zero
     private var url: URL?
     private var finished = true
     private let frameQueue = DispatchQueue(label: "not-loom.frames")
@@ -64,6 +66,7 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
                 .offsetBy(dx: -display.frame.minX, dy: -display.frame.minY)
                 .intersection(CGRect(origin: .zero, size: display.frame.size))
             config.sourceRect = crop
+            displayFrame = display.frame
             setSize(of: config, to: crop.size, scale: CGFloat(filter.pointPixelScale))
         }
 
@@ -89,7 +92,21 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
         finished = false
         try await stream.startCapture()
         self.stream = stream
+        self.config = config
         startedAt = Date()
+    }
+
+    /// Window recordings: moves the crop when the window moves. The size stays
+    /// the same, so the video never stretches.
+    func moveCrop(to rect: CGRect) {
+        guard let stream, let config else { return }
+        config.sourceRect = CGRect(
+            x: rect.minX - displayFrame.minX,
+            y: rect.minY - displayFrame.minY,
+            width: config.sourceRect.width,
+            height: config.sourceRect.height
+        )
+        Task { try? await stream.updateConfiguration(config) }
     }
 
     func stop() async {
@@ -125,6 +142,7 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
         finished = true
         startedAt = nil
         stream = nil
+        config = nil
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         if failed || size == 0 {
             onFinished?(.failure(error ?? RecorderError.emptyFile))

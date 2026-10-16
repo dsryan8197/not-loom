@@ -5,7 +5,7 @@ A native menu bar app (Swift, ScreenCaptureKit) that records your screen with yo
 - **Click the menu bar icon** to pick a camera, a microphone, the bubble's corner and size, and whether to record computer audio. A live **audio meter** shows whether the mic is picking you up. Your camera bubble appears as a preview while the menu is open.
 - **Record Full Screen** records the screen your mouse is on. **Record a Window** records just one window, with the bubble in its corner.
 - **While recording, the menu bar item is the Stop button.** It shows a red `■ 02:14` and a small level meter. Click it to stop and save.
-- **A red outline marks what's being recorded**: around the window, or along the edges of the screen. Your camera bubble stays on screen exactly where it appears in the video, so you can see if it's covering something. The outline isn't in the video; the bubble is.
+- **A red outline marks what's being recorded**: around the window, or along the edges of the screen. Your camera bubble stays on screen exactly where it appears in the video, so you can see if it's covering something, and it can't leave the recorded area. **Drag the bubble** to move it, even mid-recording; it remembers the spot until you pick a corner from the menu. If you move the recorded window, the recording, outline and bubble follow it. The outline isn't in the video; the bubble is.
 - **After you stop**, a window opens with trim handles. Drag them to cut the start and end, then click **Trim**, or click **Cancel** to keep everything. The video is saved to `~/Movies/not-loom/` as an H.264 `.mp4` that opens in QuickTime.
 
 Requires **macOS 15 (Sequoia) or later**.
