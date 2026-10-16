@@ -1,0 +1,21 @@
+name: Mac app
+
+on:
+  push:
+    paths: ["mac/**", ".github/workflows/mac.yml"]
+  pull_request:
+    paths: ["mac/**", ".github/workflows/mac.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build not-loom.app
+        working-directory: mac
+        run: ./scripts/build-app.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: not-loom-app
+          path: mac/build/not-loom.zip

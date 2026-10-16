@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.github.dsryan8197.not-loom</string>
+	<key>CFBundleName</key>
+	<string>not-loom</string>
+	<key>CFBundleDisplayName</key>
+	<string>not-loom</string>
+	<key>CFBundleExecutable</key>
+	<string>NotLoom</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>15.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>not-loom shows your camera in a bubble on screen so you appear in your recordings.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>not-loom records your voice and shows a level meter so you know it's being picked up.</string>
+</dict>
+</plist>
