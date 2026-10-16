@@ -65,10 +65,11 @@ struct WindowInfo {
         return NSRect(x: rect.minX, y: primaryHeight - rect.maxY, width: rect.width, height: rect.height)
     }
 
-    /// The window's current frame, or nil if it's gone.
+    /// The window's current frame, or nil if it's gone or off screen.
     static func currentFrame(of id: CGWindowID) -> CGRect? {
-        guard let list = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]],
-              let bounds = list.first?[kCGWindowBounds as String] as? NSDictionary
+        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]],
+              let info = list.first(where: { ($0[kCGWindowNumber as String] as? CGWindowID) == id }),
+              let bounds = info[kCGWindowBounds as String] as? NSDictionary
         else { return nil }
         return CGRect(dictionaryRepresentation: bounds as CFDictionary)
     }

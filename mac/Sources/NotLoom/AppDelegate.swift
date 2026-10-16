@@ -340,6 +340,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func stopRecording() {
         guard phase == .recording else { return }
         phase = .stopping
+        recordingFrame.hide() // don't leave the outline up while the file is saved
         updateStatusItem()
         Task { await recorder.stop() }
     }
@@ -413,10 +414,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
               frame.origin != tracked.frame.origin
         else { return }
         trackedWindow = (tracked.id, frame)
-        guard let crop = recorder.moveCrop(to: frame) else { return }
-        let area = WindowInfo.appKitRect(crop)
+        // The outline and bubble track the window itself; the capture follows it too.
+        let area = WindowInfo.appKitRect(frame)
         recordingFrame.show(around: area, isWindow: true)
         bubble.follow(area)
+        recorder.moveCrop(to: frame)
     }
 
     // MARK: Helpers

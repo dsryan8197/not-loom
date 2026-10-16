@@ -23,9 +23,9 @@ This builds `not-loom.app`, copies it to `/Applications` and opens it. Look for 
 
 The first time you record, macOS asks you to allow screen recording. Turn on not-loom in **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen not-loom. Camera and microphone access are asked for on first launch.
 
-### Keeping the screen recording permission across rebuilds
+### Permissions survive rebuilds
 
-macOS ties that permission to the app's code signature. The build script signs with your **Apple Development** certificate if it finds one, and then the permission sticks. To get one, open Xcode → Settings → Accounts, add your Apple ID and click Manage Certificates → + → Apple Development. Without a certificate the app is signed ad hoc, and after each rebuild you may need to toggle the permission off and on again.
+macOS ties the screen recording, camera and mic permissions to the app's code signature. The first time you build, the script creates a certificate called **not-loom Local Signing** in your login keychain and signs every build with it, so macOS keeps the permissions from then on. It asks for your password once to trust the certificate. If a "codesign wants to access key" dialog appears, click **Always Allow**. If you have an Apple Development certificate (from Xcode), the script uses that instead.
 
 ### Prebuilt app from GitHub
 
