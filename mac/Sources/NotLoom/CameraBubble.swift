@@ -29,6 +29,9 @@ final class CameraBubble {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.ignoresMouseEvents = true
+        // Panels hide when their app isn't frontmost by default, which made the
+        // bubble vanish as soon as you switched to the app you were recording.
+        panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
 
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))

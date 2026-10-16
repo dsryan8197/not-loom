@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let bubble = CameraBubble()
     private let recorder = Recorder()
     private let countdown = Countdown()
+    private let recordingFrame = RecordingFrame()
     private let levelView = LevelMenuView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
     private var tickTimer: Timer?
     private var micDevice: AVCaptureDevice?
@@ -210,7 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let screen = screenUnderMouse()
         let key = NSDeviceDescriptionKey("NSScreenNumber")
         let displayID = screen.deviceDescription[key] as? CGDirectDisplayID ?? CGMainDisplayID()
-        startRecording(.display(displayID), bubbleArea: screen.visibleFrame)
+        startRecording(.display(displayID), recordArea: screen.frame, bubbleArea: screen.visibleFrame)
     }
 
     @objc private func recordWindow(_ sender: NSMenuItem) {
@@ -220,7 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         NSRunningApplication(processIdentifier: window.pid)?.activate()
-        startRecording(.window(id), bubbleArea: window.appKitFrame)
+        startRecording(.window(id), recordArea: window.appKitFrame, bubbleArea: window.appKitFrame)
     }
 
     @objc private func pickCamera(_ sender: NSMenuItem) {
@@ -262,7 +263,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: Recording
 
-    private func startRecording(_ target: CaptureTarget, bubbleArea: NSRect) {
+    /// - Parameters:
+    ///   - recordArea: what ends up in the video, outlined in red while recording.
+    ///   - bubbleArea: where the camera bubble goes (a screen's area minus the Dock, or the window).
+    private func startRecording(_ target: CaptureTarget, recordArea: NSRect, bubbleArea: NSRect) {
         guard phase == .idle else { return }
         guard CGPreflightScreenCaptureAccess() else {
             CGRequestScreenCaptureAccess()
@@ -282,6 +286,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             bubble.show(device: camera, corner: settings.corner, size: settings.size, in: bubbleArea)
         } else {
             bubble.hide()
+        }
+        if case .window = target {
+            recordingFrame.show(around: recordArea, isWindow: true)
+        } else {
+            recordingFrame.show(around: recordArea, isWindow: false)
         }
         meter.use(micDevice)
         startTicking()
@@ -304,6 +313,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try await recorder.start(
                     target,
                     bubble: camera == nil ? nil : bubble.windowID,
+                    excluding: [recordingFrame.windowID],
                     mic: micDevice,
                     systemAudio: settings.systemAudio,
                     to: url
@@ -342,6 +352,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func resetToIdle() {
         phase = .idle
         bubble.hide()
+        recordingFrame.hide()
         meter.stop()
         stopTicking()
         updateStatusItem()

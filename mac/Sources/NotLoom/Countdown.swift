@@ -16,6 +16,7 @@ final class Countdown {
         panel.backgroundColor = .clear
         panel.level = .statusBar
         panel.ignoresMouseEvents = true
+        panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isReleasedWhenClosed = false
 

@@ -31,8 +31,13 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
     private var finished = true
     private let frameQueue = DispatchQueue(label: "not-loom.frames")
 
-    /// - Parameter bubble: the camera bubble's window, so window recordings include it too.
-    func start(_ target: CaptureTarget, bubble: CGWindowID?, mic: AVCaptureDevice?, systemAudio: Bool, to url: URL) async throws {
+    /// - Parameters:
+    ///   - bubble: the camera bubble's window, so window recordings include it too.
+    ///   - excluding: our own windows to keep out of full-screen recordings.
+    func start(
+        _ target: CaptureTarget, bubble: CGWindowID?, excluding: [CGWindowID],
+        mic: AVCaptureDevice?, systemAudio: Bool, to url: URL
+    ) async throws {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         let config = SCStreamConfiguration()
         let filter: SCContentFilter
@@ -42,7 +47,8 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
             guard let display = content.displays.first(where: { $0.displayID == id }) ?? content.displays.first else {
                 throw RecorderError.targetGone
             }
-            filter = SCContentFilter(display: display, excludingWindows: [])
+            let hidden = content.windows.filter { excluding.contains($0.windowID) }
+            filter = SCContentFilter(display: display, excludingWindows: hidden)
             setSize(of: config, to: filter.contentRect.size, scale: CGFloat(filter.pointPixelScale))
 
         case .window(let id):
