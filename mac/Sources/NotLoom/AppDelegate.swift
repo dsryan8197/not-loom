@@ -21,9 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let levelView = LevelMenuView(frame: NSRect(x: 0, y: 0, width: 300, height: 40))
     private var tickTimer: Timer?
     private var micDevice: AVCaptureDevice?
-    /// Window recordings: the window and the part of the screen being captured
+    /// Window recordings: the window and where it was last seen
     /// (global coordinates, origin top left).
-    private var trackedWindow: (id: CGWindowID, crop: CGRect)?
+    private var trackedWindow: (id: CGWindowID, frame: CGRect)?
     private var trimWindows: [TrimWindowController] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -407,16 +407,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// If the recorded window moves, move the capture, the red outline and the bubble with it.
     private func followRecordedWindow() {
-        guard let tracked = trackedWindow,
+        guard phase == .recording,
+              let tracked = trackedWindow,
               let frame = WindowInfo.currentFrame(of: tracked.id),
-              frame.origin != tracked.crop.origin
+              frame.origin != tracked.frame.origin
         else { return }
-        let crop = CGRect(origin: frame.origin, size: tracked.crop.size)
-        trackedWindow = (tracked.id, crop)
+        trackedWindow = (tracked.id, frame)
+        guard let crop = recorder.moveCrop(to: frame) else { return }
         let area = WindowInfo.appKitRect(crop)
         recordingFrame.show(around: area, isWindow: true)
         bubble.follow(area)
-        recorder.moveCrop(to: crop)
     }
 
     // MARK: Helpers

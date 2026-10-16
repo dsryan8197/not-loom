@@ -29,6 +29,8 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
     private var stream: SCStream?
     private var config: SCStreamConfiguration?
     private var displayFrame = CGRect.zero
+    private var pendingCrop: CGRect?
+    private var updatingCrop = false
     private var url: URL?
     private var finished = true
     private let frameQueue = DispatchQueue(label: "not-loom.frames")
@@ -97,16 +99,38 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
     }
 
     /// Window recordings: moves the crop when the window moves. The size stays
-    /// the same, so the video never stretches.
-    func moveCrop(to rect: CGRect) {
-        guard let stream, let config else { return }
-        config.sourceRect = CGRect(
-            x: rect.minX - displayFrame.minX,
-            y: rect.minY - displayFrame.minY,
-            width: config.sourceRect.width,
-            height: config.sourceRect.height
-        )
-        Task { try? await stream.updateConfiguration(config) }
+    /// the same, so the video never stretches. Returns the area actually being
+    /// captured (global coordinates), which stays on the display even if the
+    /// window is dragged partly off it.
+    @discardableResult
+    func moveCrop(to rect: CGRect) -> CGRect? {
+        guard stream != nil, let config else { return nil }
+        let size = config.sourceRect.size
+        // A crop that runs off the display makes ScreenCaptureKit stop the stream.
+        let x = min(max(rect.minX - displayFrame.minX, 0), max(0, displayFrame.width - size.width))
+        let y = min(max(rect.minY - displayFrame.minY, 0), max(0, displayFrame.height - size.height))
+        let crop = CGRect(origin: CGPoint(x: x, y: y), size: size)
+        pendingCrop = crop
+        applyPendingCrop()
+        return crop.offsetBy(dx: displayFrame.minX, dy: displayFrame.minY)
+    }
+
+    /// Sends crop changes one at a time; dragging a window produces a burst of
+    /// them, and overlapping updates can stop the stream.
+    private func applyPendingCrop() {
+        guard !updatingCrop, let crop = pendingCrop, let stream, let config else { return }
+        pendingCrop = nil
+        updatingCrop = true
+        config.sourceRect = crop
+        Task {
+            do {
+                try await stream.updateConfiguration(config)
+            } catch {
+                NSLog("not-loom: couldn't follow the window: \(error.localizedDescription)")
+            }
+            updatingCrop = false
+            applyPendingCrop()
+        }
     }
 
     func stop() async {
@@ -143,6 +167,7 @@ final class Recorder: NSObject, SCStreamDelegate, SCStreamOutput, SCRecordingOut
         startedAt = nil
         stream = nil
         config = nil
+        pendingCrop = nil
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         if failed || size == 0 {
             onFinished?(.failure(error ?? RecorderError.emptyFile))
